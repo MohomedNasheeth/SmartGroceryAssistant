@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Grocery Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .results-content {
+            color: #555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: #f8f9ff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .history-item:hover {
+            background: #e8e9ff;
+        }
+
+        .history-item-info {
+            flex: 1;
+        }
+
+        .history-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .history-item-details {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge-expiring {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .badge-fresh {
+            background: #51cf66;
+            color: white;
+        }
+
+        .badge-category {
+            background: #667eea;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .error {
+            background: #ffe0e0;
+            color: #d00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .chat-message {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        .user-message {
+            background: #667eea;
+            color: white;
+            margin-left: 20%;
+        }
+
+        .ai-message {
+            background: #f8f9ff;
+            color: #333;
+            margin-right: 20%;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Grocery Assistant</h1>
+            <p class="subtitle">Powered by Real AI & Smart Database</p>
+        </header>
+
+        <!-- Statistics Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalItems">0</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="activeItems">0</div>
+                <div class="stat-label">Active Items</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="categories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="consumedItems">0</div>
+                <div class="stat-label">Consumed</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Add Purchase with Price -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📦</span>
+                    <h2 class="card-title">Add Purchase</h2>
+                </div>
+                <div class="input-group">
+                    <label for="itemName">Item Name *</label>
+                    <input type="text" id="itemName" placeholder="e.g., Organic Milk">
+                </div>
+                <div class="input-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" value="1" min="1">
+                </div>
+                <div class="input-group">
+                    <label for="unitPrice">Unit Price ($)</label>
+                    <input type="number" id="unitPrice" step="0.01" placeholder="e.g., 3.99">
+                </div>
+                <div class="input-group">
+                    <label for="expiryDays">Expires In</label>
+                    <select id="expiryDays">
+                        <option value="2">2 days (Dairy, Meat)</option>
+                        <option value="5">5 days (Vegetables)</option>
+                        <option value="7" selected>7 days (Standard)</option>
+                        <option value="14">14 days (Long-lasting)</option>
+                        <option value="30">30 days (Dry goods)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="addPurchase()">Add to Database</button>
+            </div>
+
+            <!-- Purchase History from Database -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <h2 class="card-title">Purchase History</h2>
+                </div>
+                <button class="btn" onclick="loadPurchases()" style="margin-bottom: 15px;">Refresh from Database</button>
+                <ul id="historyList" class="history-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">🛍️</div>
+                        <p>Loading purchases...</p>
+                    </div>
+                </ul>
+            </div>
+
+            <!-- AI Predict Missing Items -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🔮</span>
+                    <h2 class="card-title">AI Predictions</h2>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">AI analyzes your real purchase history to predict what you need.</p>
+                <button class="btn" onclick="predictMissingItems()" id="predictBtn">Analyze & Predict</button>
+                <div id="predictResults" class="results" style="display: none;">
+                    <h3>AI Analysis:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- AI Healthy Alternatives -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🥗</span>
+                    <h2 class="card-title">Healthy Alternatives</h2>
+                </div>
+                <div class="input-group">
+                    <label for="alternativeItem">Item to Replace</label>
+                    <input type="text" id="alternativeItem" placeholder="e.g., White bread, Soda">
+                </div>
+                <button class="btn" onclick="getHealthyAlternatives()" id="altBtn">Get AI Suggestions</button>
+                <div id="alternativeResults" class="results" style="display: none;">
+                    <h3>AI Recommendations:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- AI Expiring Items -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">⚠️</span>
+                    <h2 class="card-title">Expiring Items</h2>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">AI checks database and suggests recipes for expiring items.</p>
+                <button class="btn" onclick="checkExpiringItems()" id="expiringBtn">Check Database</button>
+                <div id="expiringResults" class="results" style="display: none;">
+                    <h3>AI Recipe Ideas:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- AI Shopping List -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📝</span>
+                    <h2 class="card-title">Smart Shopping List</h2>
+                </div>
+                <div class="input-group">
+                    <label for="shoppingItems">Items (comma separated)</label>
+                    <input type="text" id="shoppingItems" placeholder="milk, bread, apples, chicken">
+                </div>
+                <button class="btn" onclick="createShoppingList()" id="shopBtn">Create with AI</button>
+                <div id="shoppingResults" class="results" style="display: none;">
+                    <h3>Optimized List:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- AI Meal Planning -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🍳</span>
+                    <h2 class="card-title">AI Meal Planner</h2>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">AI creates meal plans from your real inventory.</p>
+                <button class="btn" onclick="getMealIdeas()" id="mealBtn">Generate Meal Plan</button>
+                <div id="mealResults" class="results" style="display: none;">
+                    <h3>Personalized Meals:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+
+            <!-- Spending Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">💰</span>
+                    <h2 class="card-title">Spending Analysis</h2>
+                </div>
+                <p style="margin-bottom: 20px; color: #666;">AI analyzes your spending patterns and budget.</p>
+                <button class="btn" onclick="getSpendingAnalysis()" id="spendBtn">Analyze Spending</button>
+                <div id="spendingResults" class="results" style="display: none;">
+                    <h3>Financial Insights:</h3>
+                    <div class="results-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat Interface -->
+        <div class="chat-container">
+            <div class="card-header">
+                <span class="card-icon">💬</span>
+                <h2 class="card-title">Ask AI Anything</h2>
+            </div>
+            <div class="input-group">
+                <label for="chatInput">Your Question</label>
+                <textarea id="chatInput" rows="3" placeholder="Ask anything about your groceries... e.g., 'What can I cook tonight?'"></textarea>
+            </div>
+            <button class="btn" onclick="askAI()" id="chatBtn">Ask AI</button>
+            <div id="chatResults" class="results" style="display: none;">
+                <h3>AI Response:</h3>
+                <div class="results-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        // Load statistics on page load
+        window.onload = () => {
+            loadStatistics();
+            loadPurchases();
+        };
+
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}/statistics`);
+                const data = await response.json();
+                
+                document.getElementById('totalItems').textContent = data.total_items || 0;
+                document.getElementById('activeItems').textContent = data.active_items || 0;
+                document.getElementById('categories').textContent = data.categories || 0;
+                document.getElementById('consumedItems').textContent = data.consumed_items || 0;
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        async function addPurchase() {
+            const itemName = document.getElementById('itemName').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const unitPrice = parseFloat(document.getElementById('unitPrice').value);
+            const expiryDays = parseInt(document.getElementById('expiryDays').value);
+
+            if (!itemName) {
+                alert('Please enter an item name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/add-purchase`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        item: itemName,
+                        quantity: quantity,
+                        unit_price: isNaN(unitPrice) ? null : unitPrice,
+                        expiry_days: expiryDays
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert(`✓ ${itemName} added! AI categorized as: ${data.category}`);
+                    document.getElementById('itemName').value = '';
+                    document.getElementById('unitPrice').value = '';
+                    loadStatistics();
+                    loadPurchases();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+
+        async function loadPurchases() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '<div class="loading"><div class="spinner"></div> Loading from database...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/purchases`);
+                const data = await response.json();
+                const purchases = data.purchases || [];
+
+                if (purchases.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🛍️</div>
+                            <p>No purchases yet. Add your first item!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = purchases.map(item => {
+                    const daysUntilExpiry = Math.floor((new Date(item.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    const isExpiring = daysUntilExpiry <= 3;
+                    const badgeClass = isExpiring ? 'badge-expiring' : 'badge-fresh';
+                    const badgeText = isExpiring ? `${daysUntilExpiry}d left` : 'Fresh';
+                    const price = item.unit_price ? `$${item.unit_price.toFixed(2)}` : 'N/A';
+
+                    return `
+                        <li class="history-item">
+                            <div class="history-item-info">
+                                <div class="history-item-name">${item.item_name} (x${item.quantity})</div>
+                                <div class="history-item-details">
+                                    ${new Date(item.purchase_date).toLocaleDateString()} | ${price}
+                                    <span class="badge badge-category">${item.category}</span>
+                                </div>
+                            </div>
+                            <span class="badge ${badgeClass}">${badgeText}</span>
+                        </li>
+                    `;
+                }).join('');
+            } catch (error) {
+                historyList.innerHTML = `<div class="error">Error loading purchases: ${error.message}</div>`;
+            }
+        }
+
+        async function predictMissingItems() {
+            await makeAIRequest('predict', 'predictResults', 'predictBtn');
+        }
+
+        async function getHealthyAlternatives() {
+            const item = document.getElementById('alternativeItem').value.trim();
+            if (!item) {
+                alert('Please enter an item to find alternatives for');
+                return;
+            }
+
+            await makeAIRequest('alternatives', 'alternativeResults', 'altBtn', { item });
+        }
+
+        async function checkExpiringItems() {
+            await makeAIRequest('expiring', 'expiringResults', 'expiringBtn');
+        }
+
+        async function createShoppingList() {
+            const items = document.getElementById('shoppingItems').value.trim();
+            if (!items) {
+                alert('Please enter items for your shopping list');
+                return;
+            }
+
+            const itemArray = items.split(',').map(i => i.trim());
+            await makeAIRequest('shopping-list', 'shoppingResults', 'shopBtn', { items: itemArray });
+        }
+
+        async function getMealIdeas() {
+            await makeAIRequest('meal-ideas', 'mealResults', 'mealBtn');
+        }
+
+        async function getSpendingAnalysis() {
+            await makeAIRequest('spending-analysis', 'spendingResults', 'spendBtn');
+        }
+
+        async function askAI() {
+            const query = document.getElementById('chatInput').value.trim();
+            if (!query) {
+                alert('Please enter a question');
+                return;
+            }
+
+            await makeAIRequest('chat', 'chatResults', 'chatBtn', { query });
+        }
+
+        async function makeAIRequest(endpoint, resultId, buttonId, body = null) {
+            const resultsDiv = document.getElementById(resultId);
+            const contentDiv = resultsDiv.querySelector('.results-content');
+            const button = document.getElementById(buttonId);
+
+            resultsDiv.style.display = 'block';
+            contentDiv.innerHTML = '<div class="loading"><div class="spinner"></div> AI is thinking...</div>';
+            button.disabled = true;
+
+            try {
+                const options = {
+                    method: body ? 'POST' : 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(`${API_BASE}/${endpoint}`, options);
+                const data = await response.json();
+
+                if (data.error) {
+                    contentDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                } else {
+                    contentDiv.innerHTML = data.result || 'No response from AI';
+                }
+            } catch (error) {
+                contentDiv.innerHTML = `<div class="error">Network error: ${error.message}</div>`;
+            } finally {
+                button.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
